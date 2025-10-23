@@ -6,17 +6,24 @@
 
 class Lamp {
   private:
-    int prPin;
+    uint8_t prPin;
+    uint8_t msPin;
 
   public:
-    Lamp(int prPin);
+    Lamp(uint8_t prPin, uint8_t msPin);
 
     uint16_t getPrData();
-    void printPrData(uint16_t PrData);
+    void printPrData(uint16_t prData);
+
+    uint16_t getMsData();
+    void printMsData(uint16_t msData);
 
 //setters & getters
-    void setPrPin(int prPin);
-    int getPrPin();
+    void setPrPin(uint8_t prPin);
+    void setMsPin(uint8_t msPin);
+
+    uint8_t getPrPin();
+    uint8_t getMsPin();
 };
 
 #endif

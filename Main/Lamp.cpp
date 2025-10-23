@@ -3,9 +3,12 @@
 
 //#include "Libraries.h"
 
-Lamp::Lamp(int prPin){
+Lamp::Lamp(uint8_t prPin, uint8_t msPin){
   setPrPin(prPin);
+  setMsPin(msPin);
 }
+
+// -----------------------------------------------------------------------
 
 uint16_t Lamp::getPrData(){
   uint16_t sum = 0;
@@ -15,16 +18,35 @@ uint16_t Lamp::getPrData(){
   return sum / 10;
 }
 
-void Lamp::printPrData(uint16_t PrData){
+void Lamp::printPrData(uint16_t prData){
   Serial.print("ФОТОРЕЗИСТОР: ");
-  Serial.println(PrData);
+  Serial.println(prData);
 }
+
+// -----------------------------------------------------------------------
+
+uint16_t Lamp::getMsData(){
+  return digitalRead(msPin);
+}
+
+void Lamp::printMsData(uint16_t msData){
+  Serial.print("ДВИЖЕНИЕ: ");
+  Serial.println(msData);
+}
+
+// -----------------------------------------------------------------------
 
 //setters & getters
-void Lamp::setPrPin(int prPin){
+void Lamp::setPrPin(uint8_t prPin){
   this->prPin = prPin;
 }
+void Lamp::setMsPin(uint8_t msPin){
+  this->msPin = msPin;
+}
 
-int Lamp::getPrPin(){
+uint8_t Lamp::getPrPin(){
   return prPin;
+}
+uint8_t Lamp::getMsPin(){
+  return msPin;
 }
