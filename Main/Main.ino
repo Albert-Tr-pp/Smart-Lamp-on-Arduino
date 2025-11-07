@@ -10,14 +10,26 @@ Lamp<M_PIN> lamp(PR_PIN, MS_PIN);
 
 void setup() {
   Serial.begin(9600);
+
+  lamp.initComps();
 }
 
 void loop() {
-  lamp.printPrData(lamp.getPrData());
+  // lamp.printPrData(lamp.getPrData());
 
-  delay(100);
+  // delay(100);
 
   // lamp.printMsData(lamp.getMsData());
 
   // delay(100);
+
+  // lamp.testMatrix();
+
+  // lamp.turnOnMatrix();
+
+  // delay(10000);
+
+  // lamp.turnOffMatrix();
+
+  lamp.updateOled();
 }

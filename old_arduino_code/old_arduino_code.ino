@@ -453,22 +453,7 @@ void turn_off_matrix () {
   }
 }
 
-uint8_t converter(uint8_t val) {
 
-  uint8_t map[] = {0xFF, 62, 61, 60, 59, 58, 0xFF, 56, 36, 35, 34, 33, 32, 31, 30, 55, 37, 16, 15, 14, 13, 12, 29, 54, 38, 17, 4, 3, 2, 11, 28, 53, 39, 18, 5, 0, 1, 10, 27, 52, 40, 19, 6, 7, 8, 9, 26, 51, 41, 20, 21, 22, 23, 24, 25, 50, 42, 43, 44, 45, 46, 47, 48, 49};
-  //0xFF
-
-  uint8_t array_size = sizeof(map) / sizeof(map[0]);
-
-  //поиск индекса
-  for (int i = 0; i < array_size; i++) {
-    if (map[i] == val) {
-      return i;
-    }
-  }
-
-  return 0xFF;
-}
 
 
 
