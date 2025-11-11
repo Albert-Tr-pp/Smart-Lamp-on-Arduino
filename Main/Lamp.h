@@ -16,11 +16,28 @@ class Lamp {
     microLED<NUM_LEDS, M_PIN, MLED_NO_CLOCK, LED_WS2812, ORDER_GRB, CLI_AVER> matrix;
     GyverOLED<SSD1306_128x64, OLED_BUFFER> oled;
 
+    uint8_t selector;
+
   public:
     // простой int позволяет облегчить валидацию 
-    int light_threshold = 150; // аналоговый диапазон (от фоторезистора) от 0 до 1023
-    int matrix_brightness = 56; // яркость от 1 до 100 == от 1 до 56 светящихся диодов
-    float matrix_temp = 3.3; // температура в Кельвинах (количество в тысячах (K))
+    //int light_threshold = 150; // аналоговый диапазон (от фоторезистора) от 0 до 1023
+    //int matrix_brightness = 56; // яркость от 1 до 100 == от 1 до 56 светящихся диодов
+    //float matrix_temp = 3.3; // температура в Кельвинах (количество в тысячах (K))
+
+    struct Settings {
+      int light_threshold;
+      int matrix_brightness;
+      float matrix_temp;
+    };
+
+    Settings settings = {
+      150,
+      56,
+      3.3
+    };
+
+    const uint8_t SETTINGS_COUNT = 3;
+
 
   public:
     Lamp(uint8_t prPin, uint8_t msPin)
@@ -28,6 +45,7 @@ class Lamp {
     {
       setPrPin(prPin);
       setMsPin(msPin);
+      selector = 1;
     }
 
   // -----------------------------------------------------------------------
@@ -83,11 +101,11 @@ class Lamp {
   void turnOnMatrix(){
     //вкл матрицу
     //маппинг стоит вынести в отдельный метод
-    uint8_t leds_to_turn = map(matrix_brightness, 1, 100, 1, NUM_LEDS);
+    uint8_t leds_to_turn = map(settings.matrix_brightness, 1, 100, 1, NUM_LEDS);
 
     for (int i = 0; i < leds_to_turn; i++) {
 
-      matrix.set(converter(i), mKelvin(matrix_temp * 1000));
+      matrix.set(converter(i), mKelvin(settings.matrix_temp * 1000));
       matrix.show();
       //Serial.println(i);
       delay(50);
@@ -96,7 +114,7 @@ class Lamp {
 
   void turnOffMatrix(){
     //выкл матрицу
-    uint8_t leds_to_turn = map(matrix_brightness, 1, 100, 1, NUM_LEDS);
+    uint8_t leds_to_turn = map(settings.matrix_brightness, 1, 100, 1, NUM_LEDS);
 
     for (int i = leds_to_turn; i >= 0; i--) {
 
@@ -138,7 +156,6 @@ class Lamp {
     //oled.flipH(1);
     //oled.invertDisplay(1);
 
-    uint8_t selector = 1; //селектор
     uint8_t row = 16;
     uint8_t col = 16;
 
@@ -150,17 +167,17 @@ class Lamp {
     oled.setCursorXY(16, row * 0);
     oled.print("threshold: ");
     oled.setCursorXY(127 - 32, row * 0);
-    oled.print(light_threshold);
+    oled.print(settings.light_threshold);
 
     oled.setCursorXY(16, row * 1);
     oled.print("brightness: ");
     oled.setCursorXY(127 - 32, row * 1);
-    oled.print(matrix_brightness);
+    oled.print(settings.matrix_brightness);
 
     oled.setCursorXY(16, row * 2);
     oled.print("temperature: ");
     oled.setCursorXY(127 - 32, row * 2);
-    oled.print(matrix_temp);
+    oled.print(settings.matrix_temp);
 
     oled.setCursorXY(4, selector * row);
     oled.print("*");
@@ -178,6 +195,16 @@ class Lamp {
   }
 
   // -----------------------------------------------------------------------
+
+  void incrementSelector(){
+    selector++;
+
+    if (selector > SETTINGS_COUNT) {
+      selector = 1;
+    }
+
+    Serial.println("selector is: " + String(selector));
+  }
 
   //setters
   void setPrPin(uint8_t prPin){
