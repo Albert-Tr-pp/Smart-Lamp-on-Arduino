@@ -20,23 +20,40 @@ class Lamp {
 
   public:
     // простой int позволяет облегчить валидацию 
-    //int light_threshold = 150; // аналоговый диапазон (от фоторезистора) от 0 до 1023
-    //int matrix_brightness = 56; // яркость от 1 до 100 == от 1 до 56 светящихся диодов
-    //float matrix_temp = 3.3; // температура в Кельвинах (количество в тысячах (K))
+    int16_t light_threshold = 150; // аналоговый диапазон (от фоторезистора) от 0 до 1023
+    int16_t matrix_brightness = 56; // яркость от 1 до 100 == от 1 до 56 светящихся диодов
+    int16_t matrix_temp = 3300; // температура в Кельвинах (количество в тысячах (K))
 
-    struct Settings {
-      int light_threshold;
-      int matrix_brightness;
-      float matrix_temp;
+    int16_t light_threshold_range[2] = {1, 250}; // массив диапазон для уровня освещения
+    int16_t matrix_brightness_range[2] = {1, 100}; // массив диапазон для яркости матрицы
+    int16_t matrix_temp_range[2] = {0, 12000}; // массив диапазон для температуры света матрицы + погрешность
+
+    //pointers for selector
+    int16_t* settings[3] = { &light_threshold, &matrix_brightness, &matrix_temp };
+
+    //names to display on screen
+    const char* setting_names[3] = {
+      "THRESHOLD",
+      "BRIGHTNESS",
+      "TEMPERATURE"
     };
 
-    Settings settings = {
-      150,
-      56,
-      3.3
-    };
+    //amound of settings in sys
+    const uint8_t SETTINGS_COUNT = sizeof(settings) / sizeof(settings[0]);
 
-    const uint8_t SETTINGS_COUNT = 3;
+
+
+    // struct Settings {
+    //   int light_threshold;
+    //   int matrix_brightness;
+    //   float matrix_temp;
+    // };
+
+    // Settings settings = {
+    //   150,
+    //   56,
+    //   3.3
+    // };
 
 
   public:
@@ -45,7 +62,7 @@ class Lamp {
     {
       setPrPin(prPin);
       setMsPin(msPin);
-      selector = 1;
+      selector = 0;
     }
 
   // -----------------------------------------------------------------------
@@ -101,11 +118,11 @@ class Lamp {
   void turnOnMatrix(){
     //вкл матрицу
     //маппинг стоит вынести в отдельный метод
-    uint8_t leds_to_turn = map(settings.matrix_brightness, 1, 100, 1, NUM_LEDS);
+    uint8_t leds_to_turn = map(matrix_brightness, 1, 100, 1, NUM_LEDS);
 
     for (int i = 0; i < leds_to_turn; i++) {
 
-      matrix.set(converter(i), mKelvin(settings.matrix_temp * 1000));
+      matrix.set(converter(i), mKelvin(matrix_temp * 1000));
       matrix.show();
       //Serial.println(i);
       delay(50);
@@ -114,7 +131,7 @@ class Lamp {
 
   void turnOffMatrix(){
     //выкл матрицу
-    uint8_t leds_to_turn = map(settings.matrix_brightness, 1, 100, 1, NUM_LEDS);
+    uint8_t leds_to_turn = map(matrix_brightness, 1, 100, 1, NUM_LEDS);
 
     for (int i = leds_to_turn; i >= 0; i--) {
 
@@ -146,15 +163,15 @@ class Lamp {
   return 0xFF;
   }
 
-  // -----------------------------------------------------------------------
+  // ------------------------ OLED -----------------------------------------------
 
   void updateOled(){
     oled.clear();
     oled.autoPrintln(true);
     oled.setScale(1);
-    //oled.invertText(1);
+    //oled.invertText(0);
     //oled.flipH(1);
-    //oled.invertDisplay(1);
+    oled.invertDisplay(0);
 
     uint8_t row = 16;
     uint8_t col = 16;
@@ -164,23 +181,62 @@ class Lamp {
     // oled.fastLineH((row * 3) - row / 2, 0, 127, 1);
     
     //oled.home();
-    oled.setCursorXY(16, row * 0);
-    oled.print("threshold: ");
-    oled.setCursorXY(127 - 32, row * 0);
-    oled.print(settings.light_threshold);
+    // oled.setCursorXY(16, row * 0);
+    // oled.print("threshold: ");
+    // oled.setCursorXY(127 - 32, row * 0);
+    // oled.print(settings.light_threshold);
 
-    oled.setCursorXY(16, row * 1);
-    oled.print("brightness: ");
-    oled.setCursorXY(127 - 32, row * 1);
-    oled.print(settings.matrix_brightness);
+    // oled.setCursorXY(16, row * 1);
+    // oled.print("brightness: ");
+    // oled.setCursorXY(127 - 32, row * 1);
+    // oled.print(settings.matrix_brightness);
 
-    oled.setCursorXY(16, row * 2);
-    oled.print("temperature: ");
-    oled.setCursorXY(127 - 32, row * 2);
-    oled.print(settings.matrix_temp);
+    // oled.setCursorXY(16, row * 2);
+    // oled.print("temperature: ");
+    // oled.setCursorXY(127 - 32, row * 2);
+    // oled.print(settings.matrix_temp);
 
-    oled.setCursorXY(4, selector * row);
-    oled.print("*");
+    // oled.setCursorXY(4, selector * row);
+    // oled.print("*");
+
+    // oled.update();
+
+
+    oled.home();
+
+    drawRect();
+
+    oled.autoPrintln(true);
+    oled.setScale(2);
+    //oled.invertText(1);
+
+    
+
+    oled.update();
+  }
+
+  void drawRect() {
+    oled.roundRect(0, 0, 127, 32, OLED_STROKE);
+
+    oled.update();
+  }
+
+  //mode: 0 - display name, 1 - display value, 2 - display PR data
+  void displaySettings(uint8_t mode) {
+
+    oled.clear(5, 10, 126, 31);
+    oled.setCursorXY(5, 10);
+
+    if (mode == 0) {
+      oled.print(setting_names[selector]);
+    } else if (mode == 1) {
+      oled.setCursorXY(5, 10);
+      oled.print(*settings[selector]);
+    } else if (mode == 2) {
+      oled.invertDisplay(1);
+      oled.setCursorXY(5, 10);
+      oled.print(getPrData());
+    }
 
     oled.update();
   }
@@ -192,6 +248,8 @@ class Lamp {
     oled.init();
     oled.clear();
     oled.update();
+
+    //pinMode
   }
 
   // -----------------------------------------------------------------------
@@ -199,12 +257,71 @@ class Lamp {
   void incrementSelector(){
     selector++;
 
-    if (selector > SETTINGS_COUNT) {
-      selector = 1;
+    if (selector > SETTINGS_COUNT - 1) {
+      selector = 0;
     }
 
     Serial.println("selector is: " + String(selector));
   }
+
+  uint8_t getSelector(){
+    return selector;
+  }
+
+  // ------------------------ Increment Settings Values --------------------
+
+  // int16_t light_threshold = 150; // аналоговый диапазон (от фоторезистора) от 0 до 1023
+  // int8_t matrix_brightness = 56; // яркость от 1 до 100 == от 1 до 56 светящихся диодов
+  // int16_t matrix_temp = 3300; // температура в Кельвинах (количество в тысячах (K))
+
+  // int16_t light_threshold_range[2] = {1, 250}; // массив диапазон для уровня освещения
+  // int8_t matrix_brightness_range[2] = {1, 100}; // массив диапазон для яркости матрицы
+  // int16_t matrix_temp_range[2] = {0, 12000}; // массив диапазон для температуры света матрицы + погрешность
+
+  void incrementSettingsValues(uint8_t selector, int16_t n) {
+    switch (selector) {
+      int16_t tmp;
+
+      case 0:
+        tmp = light_threshold + n;
+
+        if ( tmp < light_threshold_range[0]) {
+          light_threshold = light_threshold_range[0];
+        } else if (tmp + n > light_threshold_range[1]) {
+          light_threshold = light_threshold_range[1];
+        } else {
+          light_threshold = tmp;
+        }
+
+      case 1:
+        tmp = matrix_brightness + n;
+
+        if ( tmp < matrix_brightness_range[0]) {
+          matrix_brightness = matrix_brightness_range[0];
+        } else if (tmp + n > matrix_brightness_range[1]) {
+          matrix_brightness = matrix_brightness_range[1];
+        } else {
+          matrix_brightness = tmp;
+        }
+
+      case 2:
+        tmp = matrix_temp + n;
+
+        if ( tmp < matrix_temp_range[0]) {
+          matrix_temp = matrix_temp_range[0];
+        } else if (tmp + n > matrix_temp_range[1]) {
+          matrix_temp = matrix_temp_range[1];
+        } else {
+          matrix_temp = tmp;
+        }
+
+
+    } 
+  }
+
+  // ----------------------------- SAVE TO MEM -----------------------------
+
+  // -----------------------------------------------------------------------
 
   //setters
   void setPrPin(uint8_t prPin){
